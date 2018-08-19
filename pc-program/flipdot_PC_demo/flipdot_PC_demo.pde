@@ -19,6 +19,9 @@ int animation_num = 0;
 final int SIGN_WIDTH = 56, SIGN_HEIGHT = 64;
 
 
+public static int REPLY_ACK = 0x06;
+public static int REPLY_NAK = 0x15;
+
 // VIDEO -------
 Capture video;
 Capture video_old;
@@ -38,7 +41,7 @@ void openSerialPort()
   if (portname == null) return;
   if (port != null) port.stop();
 
-  port = new Serial(this, portname, 57600);
+  port = new Serial(this, portname, 115200);
 
   println(portname);
 
@@ -74,6 +77,8 @@ void setup()
   video = new Capture(this, 640, 480);
   video.start();
   //----------
+  
+  print("Started!");
 
 }
 
@@ -90,7 +95,7 @@ void draw()
 
     background(0);
     rectMode(CENTER);
-    fill(0, 255, 0);
+    fill(0, 255, 255);
     noStroke();
 
     //translate(mouseX, mouseY, 0);
@@ -229,11 +234,35 @@ void keyPressed()
 void pixel(int x, int y, int set)
 {
 
-  if (set > 255 || set < 0) set = 255;
+  if (set != 0) set = 1;
 
+  port.clear();
+  print("Cleared serial buffer\n");
+  
+  do
+  {
+    port.write((byte) 0xff);
+    print("Wrote 0xff\n");
+    print("Waiting for ack\n");
+    while(port.available() == 0);
+    print("Got something\n");
+  }while(port.read() != REPLY_ACK);
+    
+  port.write((byte) set);
+  delay(1);
   port.write((byte) x);
   port.write((byte) y);
-  port.write((byte) set);
+  
+  /*print("Waiting for ack\n");
+  while(port.available() == 0);
+  
+  print("Got something\n");
+  if(port.read() != REPLY_ACK)
+  {
+    print("FAIL!!\n");
+    while(true);
+  }*/
+  
 
   delay(1); // works sometimes without the delay, need investigation
 }

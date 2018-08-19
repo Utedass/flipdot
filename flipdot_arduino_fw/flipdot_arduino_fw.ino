@@ -2,7 +2,7 @@
 //#include <avr/interrupt.h>
 #include <util/delay.h>
 
-#define BAUD_RATE 57600
+#define BAUD_RATE 56000
 
 byte uart_buf[3] = {
   0, 0, 0};
@@ -23,7 +23,29 @@ byte B_DATA   = 9;
 byte B_LATCH  = 8;
 
 
+enum SERIAL_COMMAND
+{
+	CMD_PIXEL_OFF,
+	CMD_PIXEL_ON,
+	CMD_CLEAR_SCREEN,
+	CMD_RESET_COM = 0xff,
+};
 
+enum SERIAL_REPLY
+{
+	REPLY_ACK = 0x06,
+	REPLY_NAK = 0x15,
+};
+
+enum PROGRAM_STATE
+{
+	STATE_WAIT_FOR_COMMAND,
+	STATE_PIXEL_OFF_WAIT_FOR_X,
+	STATE_PIXEL_OFF_WAIT_FOR_Y,
+	STATE_PIXEL_ON_WAIT_FOR_X,
+	STATE_PIXEL_ON_WAIT_FOR_Y,
+	STATE_CLEAR_SCREEN,
+} state;
 
 static const unsigned char y_index[] =
 {
@@ -63,6 +85,10 @@ void setup()
 {
   // put your setup code here, to run once:
   Serial.begin(BAUD_RATE);
+  
+  Serial.println("Yo man up n running");
+  
+  delay(1000);
 
   pinMode(A_CLOCK, OUTPUT);
   pinMode(A_DATA, OUTPUT);
@@ -72,43 +98,46 @@ void setup()
   pinMode(B_DATA, OUTPUT);
   pinMode(B_LATCH, OUTPUT);
 
+	state = STATE_WAIT_FOR_COMMAND;
 
 }
 
 long timer;
 
+byte x, y;
+
 void loop()
 {
  
-  
-//  // For testing the flip dot screen without PC
-//  for(int y = 0; y < 64; y++)
-//  {
-//      
-//      for(int x = 0; x < 56; x++)
-//      { 
-//        if((x == 0 && y == 0)||(x == 0 && y == 50)) timer = micros();
-//        pixel(x , y , 255);      
-//        if((x == 0 && y == 0)||(x == 0 && y == 50)) Serial.println(micros()-timer);
-//      }
-//      for(int x = 0; x < 56; x++)
-//      { 
-//        pixel(x , y , 0);      
-//      }
-//      
-//      delay(1);
-//  } 
-  
-//  for(int y = 0; y < 64; y++)
-//  {
-//      for(int x = 0; x < 56; x++)
-//      { 
-//        pixel(x , y , 0);
-//        
-//      }
-//  }
-  
+  /*
+  // For testing the flip dot screen without PC
+  for(int y = 0; y < 64; y++)
+  {
+	  
+	  for(int x = 0; x < 56; x++)
+	  {
+		  if((x == 0 && y == 0)||(x == 0 && y == 50)) timer = micros();
+		  pixel(x , y , 0xff);
+		  if((x == 0 && y == 0)||(x == 0 && y == 50)) Serial.println(micros()-timer);
+	  }
+	  for(int x = 0; x < 56; x++)
+	  {
+		  pixel(x , y , 0);
+	  }
+	  
+	  delay(1);
+  }
 
+  for(int y = 0; y < 64; y++)
+  {
+	  for(int x = 0; x < 56; x++)
+	  {
+		  pixel(x , y , 0);
+		  
+	  }
+  }
+  */
+/*
   if (Serial.available() >= 3)
   {
 
@@ -118,6 +147,112 @@ void loop()
 
     pixel(uart_buf[0], uart_buf[1], uart_buf[2]);
   }
+  */
+
+	byte buf = 0;
+	switch(state)
+	{
+	case STATE_WAIT_FOR_COMMAND:
+		if(Serial.available())
+		{
+			buf = Serial.read();
+			switch(buf)
+			{
+			case CMD_PIXEL_OFF:
+				state = STATE_PIXEL_OFF_WAIT_FOR_X;
+				break;
+				
+			case CMD_PIXEL_ON:
+				state = STATE_PIXEL_ON_WAIT_FOR_X;
+				break;
+				
+			case CMD_CLEAR_SCREEN:
+				state = STATE_CLEAR_SCREEN;
+				break;
+				
+			case CMD_RESET_COM:
+				Serial.write(REPLY_ACK);
+				state = STATE_WAIT_FOR_COMMAND;
+				break;
+				
+			default:
+				Serial.write(REPLY_NAK);
+				state = STATE_WAIT_FOR_COMMAND;
+			}
+		}
+		break;
+		
+	case STATE_PIXEL_OFF_WAIT_FOR_X:
+		if(Serial.available())
+		{
+			x = Serial.read();
+			if(x == CMD_RESET_COM)
+			{
+				Serial.write(REPLY_ACK);
+				state = STATE_WAIT_FOR_COMMAND;
+			}
+			state = STATE_PIXEL_OFF_WAIT_FOR_Y;
+		}
+		break;
+		
+	case STATE_PIXEL_OFF_WAIT_FOR_Y:
+		if(Serial.available())
+		{
+			y = Serial.read();
+			if(y == CMD_RESET_COM)
+			{
+				Serial.write(REPLY_ACK);
+				state = STATE_WAIT_FOR_COMMAND;
+			}
+			pixel(x, y, 0);
+			Serial.write(REPLY_ACK);
+			state = STATE_WAIT_FOR_COMMAND;
+		}
+		break;
+		
+		
+	case STATE_PIXEL_ON_WAIT_FOR_X:
+		if(Serial.available())
+		{
+			x = Serial.read();
+			if(x == CMD_RESET_COM)
+			{
+				Serial.write(REPLY_ACK);
+				state = STATE_WAIT_FOR_COMMAND;
+			}
+			state= STATE_PIXEL_ON_WAIT_FOR_Y;
+		}
+		break;
+		
+	case STATE_PIXEL_ON_WAIT_FOR_Y:
+		if(Serial.available())
+		{
+			y = Serial.read();
+			if(y == CMD_RESET_COM)
+			{
+				Serial.write(REPLY_ACK);
+				state = STATE_WAIT_FOR_COMMAND;
+			}
+			Serial.write(REPLY_ACK);
+			state = STATE_WAIT_FOR_COMMAND;
+			pixel(x, y, 255);
+		}
+		break;
+	
+	case STATE_CLEAR_SCREEN:
+		for(int y = 0; y < 64; y++){
+			for(int x = 0; x < 56; x++){
+				pixel(x, y, 0);
+				//delay(1);
+			}
+		}
+		Serial.write(REPLY_ACK);
+		state = STATE_WAIT_FOR_COMMAND;
+		break;
+		
+	default:
+		state = STATE_WAIT_FOR_COMMAND;
+	}
 
 }
 
@@ -149,7 +284,7 @@ static void pixel (byte x_sane, byte y_sane, byte set)
 
   B_PORTB = y_index[y & 0x1f];        //PortB is Row address
 
-  if (set == 0xff)
+  if (set & 0x01)
   {
     /* Select X Board and B1.24 */
     B_PORTC = x_index[x];             //PortC is Column address and bit 6 is set bit
