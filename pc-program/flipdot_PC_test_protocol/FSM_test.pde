@@ -2,7 +2,9 @@ import java.util.EnumMap;
 import processing.serial.*;
 import javax.swing.JOptionPane;
 
-public enum STATE{
+// Name of this can for some reason not be STATE as it apparently collides with the class named State. Something to do with
+// the class files generated from internal classes as flipdot_PC_test_protocol$STATE and so on.
+enum STATES{
   RESET,
   WAIT_FOR_READY,
   IDLE,
@@ -18,38 +20,33 @@ class SM {
   SM(Serial port){
     this.port = port;
     
-    println("At least we got here!");
-    
     // Initialize the state map with each according state
-    state_map = new EnumMap<STATE, State>(STATE.class);
-    println("Uuhm..");
+    state_map = new EnumMap<STATES, State>(STATES.class);
     
-    state_map.put(STATE.RESET,          new Reset(this));
-    println("Naah..");
-    state_map.put(STATE.WAIT_FOR_READY, new Wait_for_ready(this));
-    state_map.put(STATE.IDLE,           new Idle(this));
-    state_map.put(STATE.PIXEL_ON,       new Pixel_on(this));
-    state_map.put(STATE.PIXEL_OFF,      new Pixel_off(this));
-    state_map.put(STATE.SEND_BYTE,      new Send_byte(this));
-    state_map.put(STATE.SEND_X,         new Send_x(this));
-    state_map.put(STATE.SEND_Y,         new Send_y(this));
-    state_map.put(STATE.CLEAR_SCREEN,   new Clear_screen(this));
+    state_map.put(STATES.RESET,          new Reset(this));
     
-    println("But probably not here..");
+    state_map.put(STATES.WAIT_FOR_READY, new Wait_for_ready(this));
+    state_map.put(STATES.IDLE,           new Idle(this));
+    state_map.put(STATES.PIXEL_ON,       new Pixel_on(this));
+    state_map.put(STATES.PIXEL_OFF,      new Pixel_off(this));
+    state_map.put(STATES.SEND_BYTE,      new Send_byte(this));
+    state_map.put(STATES.SEND_X,         new Send_x(this));
+    state_map.put(STATES.SEND_Y,         new Send_y(this));
+    state_map.put(STATES.CLEAR_SCREEN,   new Clear_screen(this));
         
-    current = state_map.get(STATE.IDLE);
+    current = state_map.get(STATES.RESET);
     current.enter();
   }
   
   // == Private variables ==
   // Private collection of all the states
-  private EnumMap<STATE, State> state_map;
+  private EnumMap<STATES, State> state_map;
   
   private State current = null;
   private Serial port = null;
   
   // private method to correctly switch state
-  private void change_state(STATE next) {
+  private void change_state(STATES next) {
     current.leave();
     current = state_map.get(next);
     current.enter();
@@ -72,7 +69,7 @@ abstract class State {
   public void leave() {}
   
   // Needs to be able to modify its parent
-  private SM parent;
+  protected SM parent;
 }
 
 class Reset extends State {
@@ -81,12 +78,26 @@ class Reset extends State {
   }
   
   public void enter(){
+    println("Entered Reset state");
+  }
+  
+  public void update(){
+    println("Updating Reset state");
+    parent.change_state(STATES.WAIT_FOR_READY);
+  }
+  
+  public void leave(){
+    println("Leaving Reset state");
   }
 }
 
 class Wait_for_ready extends State {
   Wait_for_ready(SM p){
     super(p);
+  }
+  
+  public void enter(){
+    println("Entered Wait_for_ready state");
   }
 }
 

@@ -75,6 +75,7 @@ void setup() {
 }
 
 void draw() {
+  com.update();
 }
 
 /*
