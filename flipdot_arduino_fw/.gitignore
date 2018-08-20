@@ -4,3 +4,4 @@ Release
 *.atsln
 *.xml
 *.cppproj
+.vs
