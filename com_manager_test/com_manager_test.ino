@@ -8,11 +8,17 @@ Com_manager com;
 
 void setup()
 {
-	com_manager_init(&com, BAUD_RATE);
-	Serial.println("Up n running!");
+	Serial.begin(BAUD_RATE);
+	com_manager_init(&com);
 }
 
 void loop()
 {
-
+	com_manager_update(&com);
+	
+	while(Serial.available())
+	{
+		unsigned char buf = Serial.read();
+		com_manager_command(&com, buf);
+	}
 }
