@@ -42,3 +42,11 @@ eagle.epf
 # file locks introduced since 7.x
 *.lck
 
+# Project files when using atmel studio
+__vm
+Debug
+Release
+*.atsln
+*.xml
+*.cppproj
+.vs
