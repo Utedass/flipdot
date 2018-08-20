@@ -2,28 +2,16 @@
 
 //import java.io.File;
 //import java.awt.event.KeyEvent;
-//import javax.swing.JOptionPane;
-//import processing.serial.*;
+import javax.swing.JOptionPane;
+import processing.serial.*;
 
+SM com;
 
-Serial port = null;
+final static int BAUD_RATE = 115200;
 
-String portname = null;
-
-void openSerialPort()
+Serial selectSerialPort()
 {
-  if (portname == null) return;
-  if (port != null) port.stop();
-
-  port = new Serial(this, portname, 56000);
-
-  println(portname);
-
-  port.bufferUntil('\n');
-}
-
-void selectSerialPort()
-{
+  Serial port = null;
   String result = (String) JOptionPane.showInputDialog(frame, 
     "Select the serial port that corresponds to your Arduino board.", 
     "Select serial port", 
@@ -33,20 +21,31 @@ void selectSerialPort()
     0);
 
   if (result != null) {
-    portname = result;
-    openSerialPort();
+    String portname = result;
+    if (portname == null) return null;
+    if (port != null) port.stop();
+  
+    port = new Serial(this, portname, BAUD_RATE);
+  
+    println(portname);
+  
+    //port.bufferUntil('\n');
+    return port;
   }
+  return null;
 }
 
 void setup() {
   size(10, 10, P2D);
-  selectSerialPort();
-  
+  com = new SM(selectSerialPort());
+  /*
   print("Serial port is ready\n");
   print("Waiting for dvice to start..\n");
-  do{port.write((byte)0xff);}
+  
   while(port.available() == 0);
+  
   delay(500);
+  print("Something is on the port!\n");
   while(port.available() != 0)
   {
     byte b = (byte)port.read();
@@ -71,15 +70,14 @@ void setup() {
     byte b = (byte)port.read();
     print("Got something from the serial port: " + hex(b) + "\n");
   }
-
-  time = millis();
-
+*/
   
 }
 
 void draw() {
 }
 
+/*
 void pixel(int x, int y, int set)
 {
 
@@ -99,13 +97,22 @@ void pixel(int x, int y, int set)
 
 void keyPressed() 
 {
-
-  if (curr == null || game_over)
-  {
-    if (key == 'r')
-    {
-    }
-    return;
-  } 
-  
-}
+  switch(key){
+  case '0':
+    port.write(0x00);
+    println("0x00 sent");
+    break;
+  case '1':
+    port.write(0x01);
+    println("0x01 sent");
+    break;
+  case '2':
+    port.write(0x02);
+    println("0x02 sent");
+    break;
+  case 'f':
+    port.write(0xff);
+    println("0xff sent");
+    break;
+  }  
+}*/
