@@ -214,7 +214,7 @@ void pixel_off_entry(struct Com_manager *c)
 	if(!c)
 		return;
 	
-	Serial.write(REPLY_SUCCESS);	
+	Serial.write(REPLY_SUCCESS);
 	change_state(c, &reset_com);
 }
 
@@ -224,6 +224,6 @@ void pixel_on_entry(struct Com_manager *c)
 	if(!c)
 		return;
 		
-	Serial.write(REPLY_SUCCESS);	
+	Serial.write(REPLY_SUCCESS);
 	change_state(c, &reset_com);
 }
