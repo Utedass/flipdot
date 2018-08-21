@@ -22,7 +22,7 @@ byte x, y;
 
 void loop()
 {
-	/*	
+		/*
 	// For testing the flip dot screen without PC
 	for(int y = 0; y < 64; y++)
 	{
@@ -39,8 +39,8 @@ void loop()
 		}
 		
 		delay(1);
-	}
-
+	}*/
+/*
 	for(int y = 0; y < 64; y++)
 	{
 		for(int x = 0; x < 56; x++)
@@ -62,6 +62,7 @@ void loop()
 		pixel(uart_buf[0], uart_buf[1], uart_buf[2]);
 	}
 	*/
+	
 	com_manager_update(&com);
 	
 	while(Serial.available())

@@ -132,7 +132,7 @@ static void pixel (byte x_sane, byte y_sane, byte set)
 
 	}
 	
-	_delay_us(20); // Är denna nödvändig?
+	_delay_us(20);
 }
 
 
