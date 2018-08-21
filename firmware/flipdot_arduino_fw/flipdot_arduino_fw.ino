@@ -1,4 +1,4 @@
-//#include <avr/io.h>
+ //#include <avr/io.h>
 //#include <avr/interrupt.h>
 #include <util/delay.h>
 #include "flipdot.h"
@@ -29,13 +29,30 @@ void loop()
 		
 		for(int x = 0; x < 56; x++)
 		{
-			if((x == 0 && y == 0)||(x == 0 && y == 50)) timer = micros();
+			if((x == 0 && y == 0)||(x == 0 && y == 50))
+				timer = micros();
+			
 			pixel(x , y , 0xff);
-			if((x == 0 && y == 0)||(x == 0 && y == 50)) Serial.println(micros()-timer);
+			
+			if((x == 0 && y == 0)||(x == 0 && y == 50))
+				Serial.println(micros()-timer);
 		}
+		
+		delay(1);
+	}		
+	// For testing the flip dot screen without PC
+	for(int y = 0; y < 64; y++)
+	{
+		
 		for(int x = 0; x < 56; x++)
 		{
-			pixel(x , y , 0);
+			if((x == 0 && y == 0)||(x == 0 && y == 50))
+				timer = micros();
+			
+			pixel(x , y , 0x00);
+			
+			if((x == 0 && y == 0)||(x == 0 && y == 50))
+				Serial.println(micros()-timer);
 		}
 		
 		delay(1);
