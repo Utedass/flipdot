@@ -7,7 +7,7 @@ import processing.serial.*;
 
 SM com;
 
-final static int BAUD_RATE = 115200;
+final static int BAUD_RATE = 1000000;
 
 Serial selectSerialPort()
 {
@@ -35,9 +35,16 @@ Serial selectSerialPort()
   return null;
 }
 
+void update_com(){
+  while(!false){ // It's funny because it's true
+    com.update();
+  }
+}
+
 void setup() {
   size(10, 10, P2D);
   com = new SM(selectSerialPort());
+  thread("update_com");
   /*
   print("Serial port is ready\n");
   print("Waiting for dvice to start..\n");
@@ -75,7 +82,6 @@ void setup() {
 }
 
 void draw() {
-  com.update();
 }
 
 /*
@@ -102,13 +108,30 @@ void keyPressed()
   case '1':
     println("pixel_on(5, 10)");
     if(com.pixel_on(5,10)){
-      println("pixel will be drawn!");
+      println("System is ready, pixel will be drawn!");
     }
     else{
       println("System is busy..");
     }
     break;
   case '2':
+    println("pixel_off(5, 10)");
+    if(com.pixel_off(5,10)){
+      println("System is ready, pixel will be drawn!");
+    }
+    else{
+      println("System is busy..");
+    }
+    break;
+  case '3':
+    if(com.clear()){
+      println("System is ready, screen will be cleared!");
+    }
+    else{
+      println("System is busy..");
+    }
+    break;
+  case '0':
     if(com.ready()){
       println("System is ready!");
     }

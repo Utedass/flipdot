@@ -212,7 +212,8 @@ void com_clear_screen_entry(struct Com_manager *c)
 			pixel_off(x, y);
 		}
 	}
-	
+
+	Serial.write(REPLY_SUCCESS);
 	change_state(c, &com_reset_com);
 }
 
