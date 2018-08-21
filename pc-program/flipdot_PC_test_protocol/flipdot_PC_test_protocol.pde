@@ -94,26 +94,30 @@ void pixel(int x, int y, int set)
 
   delay(1);
 }
-
+*/
 
 void keyPressed() 
 {
   switch(key){
-  case '0':
-    port.write(0x00);
-    println("0x00 sent");
-    break;
   case '1':
-    port.write(0x01);
-    println("0x01 sent");
+    println("pixel_on(5, 10)");
+    if(com.pixel_on(5,10)){
+      println("pixel will be drawn!");
+    }
+    else{
+      println("System is busy..");
+    }
     break;
   case '2':
-    port.write(0x02);
-    println("0x02 sent");
+    if(com.ready()){
+      println("System is ready!");
+    }
+    else{
+      println("System is busy..");
+    }
     break;
   case 'f':
-    port.write(0xff);
     println("0xff sent");
     break;
   }  
-}*/
+}

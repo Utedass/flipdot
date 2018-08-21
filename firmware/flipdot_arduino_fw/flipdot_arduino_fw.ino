@@ -4,7 +4,7 @@
 #include "flipdot.h"
 #include "com_manager.h"
 
-#define BAUD_RATE 115200
+#define BAUD_RATE 1000000
 
 Com_manager com;
 
