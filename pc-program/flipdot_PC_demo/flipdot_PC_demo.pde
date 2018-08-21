@@ -5,6 +5,9 @@ import processing.serial.*;
 
 import processing.video.*;
 
+SM com;
+final static int BAUD_RATE = 1000000;
+
 float x, y, z;
 
 float i=0;
@@ -41,7 +44,7 @@ void openSerialPort()
   if (portname == null) return;
   if (port != null) port.stop();
 
-  port = new Serial(this, portname, 115200);
+  port = new Serial(this, portname, BAUD_RATE);
 
   println(portname);
 
@@ -64,18 +67,27 @@ void selectSerialPort()
   }
 }
 
+void update_com(){
+  while(!false){ // It's funny because it's true
+    com.update();
+  }
+}
+
 void setup() 
 {
   size(560, 640, P3D);
   selectSerialPort();
-  delay(500);
-
+  com = new SM(port);
+  thread("update_com");
+  println("Waiting for communiaction to be established..");
+  while(!com.ready()){}
+  println("System ready!");
 
   time = millis();
 
   //VIDEO-----
-  video = new Capture(this, 640, 480);
-  video.start();
+  //video = new Capture(this, 640, 480);
+  //video.start();
   //----------
   
   print("Started!");
@@ -108,7 +120,7 @@ void draw()
 
     case 1:
 
-
+/*
       if (video.available() && keyPressed ) 
       {
         background(0);
@@ -152,7 +164,7 @@ void draw()
             ellipse( x, y + 80, 10, 10);
           }
         }
-      }
+      }*/
 
       break;
 
@@ -233,7 +245,14 @@ void keyPressed()
 
 void pixel(int x, int y, int set)
 {
-
+  if(set != 0){
+    while(!com.pixel_on(x, y)){}
+  }
+  else{
+    while(!com.pixel_off(x, y)){}
+  }
+  
+/*
   if (set != 0) set = 1;
 
   port.clear();
@@ -252,7 +271,7 @@ void pixel(int x, int y, int set)
   delay(1);
   port.write((byte) x);
   port.write((byte) y);
-  
+  */
   /*print("Waiting for ack\n");
   while(port.available() == 0);
   
@@ -264,11 +283,13 @@ void pixel(int x, int y, int set)
   }*/
   
 
-  delay(1); // works sometimes without the delay, need investigation
+  //delay(1); // works sometimes without the delay, need investigation
 }
 
 void paint_all(int c)
 {
+  while(!com.clear()){}
+  /*
   int count = 0;
   if (port != null)
   {
@@ -285,6 +306,7 @@ void paint_all(int c)
     }
   }
   println(count);
+  */
 }
 
 void refresh_screen()
