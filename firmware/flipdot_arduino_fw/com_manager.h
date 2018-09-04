@@ -29,6 +29,7 @@ struct Com_manager{
 	unsigned int flags_a;
 	unsigned char cursor_x;
 	unsigned char cursor_y;
+	boolean escaped;
 };
 
 void com_manager_init(struct Com_manager *c);

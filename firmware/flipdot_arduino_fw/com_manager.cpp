@@ -11,7 +11,9 @@
 enum SERIAL_COMMAND{
 	CMD_PIXEL_OFF,
 	CMD_PIXEL_ON,
+	CMD_PIXEL_STREAM,
 	CMD_CLEAR_SCREEN,
+	CMD_ESCAPE = 0xfe,
 	CMD_RESET_COM = 0xff,
 };
 
@@ -30,28 +32,33 @@ enum FLAGS_A{
 // Declarations for individual state's functions
 void com_wait_for_command_entry(struct Com_manager *c);
 void com_wait_for_command_command(struct Com_manager *c, const unsigned char cmd);
-
 void com_reset_com_entry(struct Com_manager *c);
-
 void com_wait_x_command(struct Com_manager *c, const unsigned char cmd);
-
 void com_wait_y_command(struct Com_manager *c, const unsigned char cmd);
-
 void com_clear_screen_entry(struct Com_manager *c);
-
 void com_pixel_off_entry(struct Com_manager *c);
-
 void com_pixel_on_entry(struct Com_manager *c);
+void com_wait_stream_entry(struct Com_manager *c);
+void com_wait_stream_command(struct Com_manager *c, const unsigned char cmd);
 
 
 // Initialization of states
-struct Com_manager_state com_wait_for_command	= {com_wait_for_command_entry, NULL, NULL, com_wait_for_command_command, NULL};
-struct Com_manager_state com_reset_com			= {com_reset_com_entry, NULL, NULL, NULL, NULL};
-struct Com_manager_state com_wait_x				= {NULL, NULL, NULL, com_wait_x_command, NULL};
-struct Com_manager_state com_wait_y				= {NULL, NULL, NULL, com_wait_y_command, NULL};
-struct Com_manager_state com_clear_screen		= {com_clear_screen_entry, NULL, NULL,  NULL, NULL};
-struct Com_manager_state com_pixel_off			= {com_pixel_off_entry, NULL, NULL,  NULL, NULL};
-struct Com_manager_state com_pixel_on			= {com_pixel_on_entry, NULL, NULL,  NULL, NULL};
+/*
+struct Com_manager_state state_name					= {enter_func, idle_func, leave_func, command_func, aux_data};
+*/
+	
+struct Com_manager_state com_wait_for_command		= {com_wait_for_command_entry, NULL, NULL, com_wait_for_command_command, NULL};
+struct Com_manager_state com_reset_com				= {com_reset_com_entry, NULL, NULL, NULL, NULL};
+
+struct Com_manager_state com_wait_x					= {NULL, NULL, NULL, com_wait_x_command, NULL};
+struct Com_manager_state com_wait_y					= {NULL, NULL, NULL, com_wait_y_command, NULL};
+	
+struct Com_manager_state com_clear_screen			= {com_clear_screen_entry, NULL, NULL,  NULL, NULL};
+
+struct Com_manager_state com_pixel_off				= {com_pixel_off_entry, NULL, NULL,  NULL, NULL};
+struct Com_manager_state com_pixel_on				= {com_pixel_on_entry, NULL, NULL,  NULL, NULL};
+	
+struct Com_manager_state com_wait_stream			= {com_wait_stream_entry, NULL, NULL, com_wait_stream_command, NULL};
 
 void change_state(struct Com_manager *c, struct Com_manager_state *s)
 {
@@ -75,6 +82,8 @@ void com_manager_init(struct Com_manager *c)
 	c->flags_a = 0;
 		
 	c->state = &com_wait_for_command;
+	
+	c->escaped = false;
 	
 	if(c->state->entry)
 		c->state->entry(c);
@@ -129,6 +138,11 @@ void com_wait_for_command_command(struct Com_manager *c, const unsigned char cmd
 		change_state(c, &com_wait_x);
 		break;
 		
+	case CMD_PIXEL_STREAM:
+		Serial.write(REPLY_ACK);
+		change_state(c, &com_wait_stream);
+		break;
+		
 	case CMD_CLEAR_SCREEN:
 		Serial.write(REPLY_ACK);
 		change_state(c, &com_clear_screen);
@@ -150,7 +164,9 @@ void com_reset_com_entry(struct Com_manager *c)
 	debug("Entered com_reset_com_entry");
 	if(!c)
 		return;
-		
+	
+	c->escaped = false;
+	
 	change_state(c, &com_wait_for_command);
 }
 
@@ -238,3 +254,56 @@ void com_pixel_on_entry(struct Com_manager *c)
 	Serial.write(REPLY_SUCCESS);	
 	change_state(c, &com_reset_com);
 }
+
+void com_wait_stream_entry(struct Com_manager *c)
+{
+	debug("Entered com_wait_stream_entry");
+	if(!c)
+		return;
+		
+	c->cursor_x = 0;
+	c->cursor_y = 0;
+}
+
+void com_wait_stream_command(struct Com_manager *c, const unsigned char cmd)
+{
+	debug("Entered com_wait_stream_command");
+	if(!c)
+		return;
+		
+	if(cmd == CMD_ESCAPE && !c->escaped)
+	{
+		Serial.write(REPLY_ACK);
+		c->escaped = true;
+	}
+	else if(cmd == CMD_RESET_COM && !c->escaped)
+	{
+		Serial.write(REPLY_ACK);
+		change_state(c, &com_reset_com);
+		return;
+	}
+	else
+	{
+		Serial.write(REPLY_ACK);
+		c->escaped = false;
+		for(int i = 0; i < 8; i++)
+		{
+			if(cmd>>i&1)
+				pixel_on(c->cursor_x++, c->cursor_y);
+			else
+				pixel_off(c->cursor_x++, c->cursor_y);
+				
+			if(c->cursor_x >= SCREEN_WIDTH-1)
+			{
+				c->cursor_x = 0;
+				c->cursor_y++;
+				if(c->cursor_y >= SCREEN_HEIGHT-1)
+				{
+					Serial.write(REPLY_SUCCESS);
+					change_state(c, &com_wait_for_command);
+				}
+			}
+		}
+	}
+}
+
