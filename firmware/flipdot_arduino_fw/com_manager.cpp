@@ -11,8 +11,8 @@
 enum SERIAL_COMMAND{
 	CMD_PIXEL_OFF,
 	CMD_PIXEL_ON,
-	CMD_PIXEL_STREAM,
 	CMD_CLEAR_SCREEN,
+	CMD_PIXEL_STREAM,
 	CMD_ESCAPE = 0xfe,
 	CMD_RESET_COM = 0xff,
 };
@@ -288,16 +288,16 @@ void com_wait_stream_command(struct Com_manager *c, const unsigned char cmd)
 		c->escaped = false;
 		for(int i = 0; i < 8; i++)
 		{
-			if(cmd>>i&1)
+			if(cmd<<i&0x80)
 				pixel_on(c->cursor_x++, c->cursor_y);
 			else
 				pixel_off(c->cursor_x++, c->cursor_y);
-				
-			if(c->cursor_x >= SCREEN_WIDTH-1)
+			
+			if(c->cursor_x > SCREEN_WIDTH-1)
 			{
 				c->cursor_x = 0;
 				c->cursor_y++;
-				if(c->cursor_y >= SCREEN_HEIGHT-1)
+				if(c->cursor_y > SCREEN_HEIGHT-1)
 				{
 					Serial.write(REPLY_SUCCESS);
 					change_state(c, &com_wait_for_command);
