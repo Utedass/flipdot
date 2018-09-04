@@ -7,6 +7,7 @@ import processing.serial.*;
 
 //Debug
 boolean debug = false;
+final static int BAUD_RATE = 1000000;
 
 float x, y, z;
 
@@ -65,7 +66,7 @@ void openSerialPort()
   if (portname == null) return;
   if (port != null) port.stop();
 
-  port = new Serial(this, portname, 56000);
+  port = new Serial(this, portname, BAUD_RATE);
 
   println(portname);
 
@@ -91,38 +92,25 @@ void selectSerialPort()
 int[][] new_frame = new int[2*SIGN_WIDTH][2*SIGN_HEIGHT];
 int[][] old_frame = new int[2*SIGN_WIDTH][2*SIGN_HEIGHT];
 
+SM com;
+
+void update_com(){
+  while(!false){ // It's funny because it's true
+    com.update();
+  }
+}
+
 void setup() {
   size(560, 640, P2D);
   selectSerialPort();
-  print("Serial port is ready\n");
-  print("Waiting for dvice to start..\n");
-  do{port.write((byte)0xff);}
-  while(port.available() == 0);
-  delay(500);
-  while(port.available() != 0)
-  {
-    byte b = (byte)port.read();
-    print("Got something from the serial port: " + hex(b) + "\n");
-  }
-  print("Sending reset command\n");
-  do{port.write((byte)0xff);}
-  while(port.available() == 0);
-  print("Reset command sent, waiting for ack..\n");
-  while(port.available() == 0);
-  while(port.available() != 0)
-  {
-    byte b = (byte)port.read();
-    print("Got something from the serial port: " + hex(b) + "\n");
-  }
-  
-  print("Sending clear command\n");
-  port.write((byte)0x02);
-  print("Clear command sent, waiting for ack..\n");
-  while(port.available() != 0)
-  {
-    byte b = (byte)port.read();
-    print("Got something from the serial port: " + hex(b) + "\n");
-  }
+  com = new SM(port);
+  thread("update_com");
+  println("Waiting for communiaction to be established..");
+  while(!com.ready()){}
+  println("System ready! Clearing screen..");
+  while(!com.clear()){}
+  while(!com.ready()){}
+  println("Screen cleared!");
 
   time = millis();
 
@@ -162,7 +150,7 @@ void setup() {
 
 void draw() {
   background(0);
-  noSmooth();//test
+  //noSmooth();//test
 
   if (game_over) 
   {
@@ -259,7 +247,13 @@ void draw_to_screen()
 
 void pixel(int x, int y, int set)
 {
-
+  if(set != 0){
+    while(!com.pixel_on(x, y)){}
+  }
+  else{
+    while(!com.pixel_off(x, y)){}
+  }
+/*
   if (set != 0) set = 1;
 
   port.write((byte) 0xff);
@@ -270,7 +264,7 @@ void pixel(int x, int y, int set)
 
   //println(x + ", " + y  + ", "  + set);
 
-  delay(1);
+  delay(1);*/
 }
 
 void loadNext() 

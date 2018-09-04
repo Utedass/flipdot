@@ -86,8 +86,8 @@ void setup()
   time = millis();
 
   //VIDEO-----
-  //video = new Capture(this, 640, 480);
-  //video.start();
+  video = new Capture(this, 640, 480);
+  video.start();
   //----------
   
   print("Started!");
@@ -120,7 +120,7 @@ void draw()
 
     case 1:
 
-/*
+
       if (video.available() && keyPressed ) 
       {
         background(0);
@@ -164,7 +164,7 @@ void draw()
             ellipse( x, y + 80, 10, 10);
           }
         }
-      }*/
+      }
 
       break;
 
@@ -215,6 +215,8 @@ void draw_to_screen()
 
 void clear_screen()
 {
+  while(!com.clear()){}
+  /*
   if (port != null)
   {
     for (int X = 0; X < SIGN_WIDTH; X++)
@@ -226,6 +228,7 @@ void clear_screen()
       }
     }
   }
+  */
 }
 
 void keyPressed() 

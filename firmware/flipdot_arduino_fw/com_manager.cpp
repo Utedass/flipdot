@@ -209,7 +209,7 @@ void com_wait_y_command(struct Com_manager *c, const unsigned char cmd)
 
 	c->cursor_y = cmd;
 		
-	if(c->flags_a | FLAGS_A_PIXEL_OFF)
+	if(c->flags_a & FLAGS_A_PIXEL_OFF)
 		change_state(c, &com_pixel_off);
 	else
 		change_state(c, &com_pixel_on);
