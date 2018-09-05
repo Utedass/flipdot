@@ -46,6 +46,7 @@ void setup()
 	
 	current_state = STATE_RESET;
 	
+	
 	pinMode(2, OUTPUT);
 	pinMode(3, OUTPUT);
 	pinMode(4, OUTPUT);
@@ -158,17 +159,19 @@ void loop()
 		if(millis()-last_time >= timeout)
 		{
 			last_time = millis();
-			current_state = STATE_CREATE_LIFE;
+			draw_flash_to_screen(ADMITTANSEN_BG);
+			current_state = STATE_SHOW_ADMITTANSEN;
+			//current_state = STATE_CREATE_LIFE;
 			break;
 		}
 		break;
 		
 	case STATE_CREATE_LIFE:
-		life_init();
 		Serial.write(CMD_CLEAR_SCREEN);
 		wait_for_cmd(REPLY_ACK);
 		wait_for_cmd(REPLY_SUCCESS);
 		wait_for_cmd(REPLY_RDY);
+		life_init();
 		
 		current_state = STATE_LIVE_LIFE;
 		last_time = millis();
@@ -179,9 +182,9 @@ void loop()
 		
 		if(millis()-last_time >= timeout)
 		{
-			draw_flash_to_screen(ADMITTANSEN_BG);
+			//draw_flash_to_screen(ADMITTANSEN_BG);
 			last_time = millis();
-			current_state = STATE_SHOW_ADMITTANSEN;
+			//current_state = STATE_SHOW_ADMITTANSEN;
 			break;
 		}
 		break;
@@ -327,7 +330,6 @@ void life_update()
 		 }
 		 
 		 life_last_time = millis();
-		 current_state = STATE_SHOW_ADMITTANSEN;
 	 }
 }
 
@@ -363,22 +365,34 @@ int life_alive_neighbours(int x, int y)
 
 boolean life_getxy(int x, int y, byte *data)
 {
+	while(x < 0)
+		x += WIDTH;
+	while(y < 0)
+		y += HEIGHT;
+		
 	x %= WIDTH;
 	y %= HEIGHT;
-	char pixel_index = y*WIDTH + x;
-	char byte_index = pixel_index >> 3; // div by 8
-	char bit_index = pixel_index & (1<<byte_index);
 	
-	return (world[byte_index] & bit_index);
+	unsigned char pixel_index = y*WIDTH + x;
+	unsigned char byte_index = pixel_index >> 3; // div by 8
+	unsigned char bit_index = pixel_index & (1<<byte_index);
+	
+	return (world[byte_index] & bit_index) != 0;
 }
 
 void life_setxy(int x, int y, boolean status, byte *data)
 {
+	while(x < 0)
+		x += WIDTH;
+	while(y < 0)
+		y += HEIGHT;
+	
 	x %= WIDTH;
 	y %= HEIGHT;
-	char pixel_index = y*WIDTH + x;
-	char byte_index = pixel_index >> 3; // div by 8
-	char bit_index = pixel_index & (1<<byte_index);
+
+	unsigned char pixel_index = y*WIDTH + x;
+	unsigned char byte_index = pixel_index >> 3; // div by 8
+	unsigned char bit_index = pixel_index & (1<<byte_index);
 	
 	if(status)
 		next_world[byte_index] |= bit_index;
