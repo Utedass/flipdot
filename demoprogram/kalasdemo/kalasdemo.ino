@@ -286,6 +286,19 @@ void life_init()
 	{
 		world[i] = next_world[i] = 0;
 	}
+	
+	// Add some "blinkers"
+	next_world[WIDTH*8+2] = 0x03;
+	next_world[WIDTH*16+4] = 0x03;
+	next_world[WIDTH*HEIGHT-2] = 0x03;
+	
+	// Add a spaceship
+	life_setxy(5, 21, true);
+	life_setxy(6, 22, true);
+	life_setxy(7, 20, true);
+	life_setxy(7, 21, true);
+	life_setxy(7, 22, true);
+	
 	life_last_time = millis();
 }
 
